@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>QR Scanner</title>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#000;font-family:sans-serif;min-height:100vh;}
+.box{width:100%;height:100vh;position:relative;overflow:hidden;}
+#video{width:100%;height:100%;object-fit:cover;}
+#canvas{display:none;}
+.frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:250px;height:250px;border:4px solid #6366F1;border-radius:20px;box-shadow:0 0 0 1000px rgba(0,0,0,0.4);}
+.frame.ok{border-color:#10B981;}
+.status{position:absolute;bottom:30px;left:20px;right:20px;padding:16px;background:rgba(99,102,241,0.95);color:white;border-radius:15px;font-size:16px;font-weight:600;text-align:center;}
+.status.ok{background:rgba(16,185,129,0.95);}
+.status.err{background:rgba(239,68,68,0.95);}
+</style>
+</head>
+<body>
+<div class="box">
+<video id="video" autoplay playsinline muted></video>
+<div class="frame" id="frame"></div>
+<div class="status" id="status">🔍 Looking for QR...</div>
+<canvas id="canvas"></canvas>
+</div>
+<script>
+const video=document.getElementById('video');
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+const statusEl=document.getElementById('status');
+const frameEl=document.getElementById('frame');
+let scanning=true;
+async function start(){
+try{
+const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+video.srcObject=stream;
+video.onloadedmetadata=()=>{
+canvas.width=video.videoWidth;
+canvas.height=video.videoHeight;
+requestAnimationFrame(tick);
+};
+}catch(err){
+statusEl.textContent='❌ '+err.message;
+statusEl.className='status err';
+}
+}
+function tick(){
+if(!scanning){return;}
+if(video.readyState===video.HAVE_ENOUGH_DATA){
+ctx.drawImage(video,0,0,canvas.width,canvas.height);
+const d=ctx.getImageData(0,0,canvas.width,canvas.height);
+const code=jsQR(d.data,d.width,d.height);
+if(code&&code.data){
+scanning=false;
+statusEl.textContent='✅ '+code.data;
+statusEl.className='status ok';
+frameEl.className='frame ok';
+setTimeout(()=>{window.location.href='qrguard://scan?url='+encodeURIComponent(code.data);},1000);
+}
+}
+requestAnimationFrame(tick);
+}
+start();
+</script>
+</body>
+</html>
