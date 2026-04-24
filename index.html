@@ -8,23 +8,57 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="https://em-content.zobj.net/thumbs/240/google/350/shield_1f6e1-fe0f.png">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
-body{background:#F8FAFC;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
-.container{max-width:400px;width:100%;}
-.header{display:flex;align-items:center;gap:10px;margin-bottom:40px;}
-.logo{width:40px;height:40px;background:#6366F1;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-size:22px;}
-.app-name{font-size:22px;font-weight:bold;color:#1E293B;}
-.title{text-align:center;font-size:28px;font-weight:bold;color:#0F172A;margin-bottom:8px;}
-.subtitle{text-align:center;font-size:14px;color:#64748B;margin-bottom:40px;}
-.qr-icon{width:200px;height:200px;background:#EEF2FF;border-radius:30px;margin:0 auto 25px;display:flex;align-items:center;justify-content:center;font-size:120px;color:#6366F1;}
-.hint{text-align:center;font-size:13px;color:#94A3B8;font-style:italic;margin-bottom:25px;}
-.btn-primary{width:100%;padding:16px;background:#6366F1;color:white;border:none;border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform 0.2s;}
-.btn-primary:active{transform:scale(0.98);}
-.btn-primary:hover{background:#5558E3;}
-.install-banner{position:fixed;bottom:20px;left:20px;right:20px;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:white;padding:15px;border-radius:15px;display:none;box-shadow:0 10px 40px rgba(99,102,241,0.4);z-index:100;}
-.install-banner.show{display:flex;align-items:center;gap:10px;animation:slideUp 0.4s ease;}
-@keyframes slideUp{from{transform:translateY(100%);opacity:0;}to{transform:translateY(0);opacity:1;}}
-.install-icon{font-size:30px;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;transition:background 0.3s,color 0.3s;}
+
+body{background:#FFFFFF;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:15px;}
+body.dark{background:#0F172A;color:white;}
+
+.container{max-width:400px;width:100%;background:white;border-radius:25px;padding:25px;box-shadow:0 10px 40px rgba(0,0,0,0.08);}
+body.dark .container{background:#1E293B;}
+
+/* Header */
+.header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:20px;border-bottom:1px solid #F1F5F9;margin-bottom:25px;}
+body.dark .header{border-bottom-color:#334155;}
+
+.logo-wrap{display:flex;align-items:center;gap:10px;}
+.logo{width:40px;height:40px;background:linear-gradient(135deg,#6366F1,#8B5CF6);border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(99,102,241,0.3);}
+.logo svg{width:22px;height:22px;fill:white;}
+.app-name{font-size:18px;font-weight:bold;color:#1E293B;line-height:1.2;}
+body.dark .app-name{color:white;}
+
+.dark-mode-btn{padding:10px 20px;background:#1E293B;color:white;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;transition:transform 0.2s;}
+.dark-mode-btn:active{transform:scale(0.95);}
+body.dark .dark-mode-btn{background:#F1F5F9;color:#1E293B;}
+
+/* Title */
+.title{text-align:center;font-size:26px;font-weight:bold;color:#0F172A;margin-bottom:8px;}
+body.dark .title{color:white;}
+
+.subtitle{text-align:center;font-size:14px;color:#64748B;margin-bottom:30px;}
+
+/* Scan Frame */
+.scan-frame{position:relative;width:260px;height:260px;margin:0 auto 25px;display:flex;align-items:center;justify-content:center;}
+
+.corner{position:absolute;width:45px;height:45px;border:4px solid #6366F1;}
+.corner.tl{top:0;left:0;border-right:none;border-bottom:none;border-top-left-radius:8px;}
+.corner.tr{top:0;right:0;border-left:none;border-bottom:none;border-top-right-radius:8px;}
+.corner.bl{bottom:0;left:0;border-right:none;border-top:none;border-bottom-left-radius:8px;}
+.corner.br{bottom:0;right:0;border-left:none;border-top:none;border-bottom-right-radius:8px;}
+
+.qr-svg{width:160px;height:160px;}
+
+/* Hint */
+.hint{text-align:center;font-size:13px;color:#94A3B8;margin-bottom:25px;}
+
+/* Button */
+.btn-scan{width:100%;padding:18px;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:white;border:none;border-radius:15px;font-size:17px;font-weight:bold;cursor:pointer;box-shadow:0 8px 25px rgba(99,102,241,0.4);transition:transform 0.2s;}
+.btn-scan:active{transform:scale(0.98);}
+.btn-scan:hover{box-shadow:0 12px 30px rgba(99,102,241,0.5);}
+
+/* Install Banner */
+.install-banner{position:fixed;bottom:20px;left:20px;right:20px;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:white;padding:15px;border-radius:15px;display:none;box-shadow:0 10px 40px rgba(99,102,241,0.4);z-index:100;max-width:400px;margin:0 auto;}
+.install-banner.show{display:flex;align-items:center;gap:10px;}
+.install-icon{font-size:26px;}
 .install-text{flex:1;}
 .install-title{font-weight:bold;font-size:14px;}
 .install-sub{font-size:12px;opacity:0.9;}
@@ -33,42 +67,106 @@ body{background:#F8FAFC;min-height:100vh;display:flex;align-items:center;justify
 </style>
 </head>
 <body>
+
 <div class="container">
+
+<!-- Header -->
 <div class="header">
-<div class="logo">🛡️</div>
-<div class="app-name">QR Guard</div>
+<div class="logo-wrap">
+<div class="logo">
+<svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
 </div>
-<h1 class="title">Scan & Stay Safe</h1>
-<p class="subtitle">Detect malicious QR codes instantly</p>
-<div class="qr-icon">▣</div>
-<p class="hint">Point your camera at a QR code</p>
-<button class="btn-primary" onclick="window.location.href='scan.html'">
-<span style="font-size:22px;">▣</span>
-Start Scanning
-</button>
+<div class="app-name">QR<br>Guard</div>
+</div>
+<button class="dark-mode-btn" onclick="toggleDarkMode()">Dark<br>Mode</button>
 </div>
 
+<!-- Title -->
+<h1 class="title">Scan & Stay Safe</h1>
+<p class="subtitle">Detect malicious QR codes instantly</p>
+
+<!-- Scan Frame with QR Icon -->
+<div class="scan-frame">
+<div class="corner tl"></div>
+<div class="corner tr"></div>
+<div class="corner bl"></div>
+<div class="corner br"></div>
+<svg class="qr-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<!-- Top Left Square -->
+<rect x="10" y="10" width="25" height="25" fill="none" stroke="#6366F1" stroke-width="4"/>
+<rect x="18" y="18" width="9" height="9" fill="#6366F1"/>
+
+<!-- Top Right Square -->
+<rect x="65" y="10" width="25" height="25" fill="none" stroke="#6366F1" stroke-width="4"/>
+<rect x="73" y="18" width="9" height="9" fill="#6366F1"/>
+
+<!-- Bottom Left Square -->
+<rect x="10" y="65" width="25" height="25" fill="none" stroke="#6366F1" stroke-width="4"/>
+<rect x="18" y="73" width="9" height="9" fill="#6366F1"/>
+
+<!-- Small dots and patterns -->
+<rect x="42" y="10" width="5" height="5" fill="#6366F1"/>
+<rect x="50" y="10" width="5" height="5" fill="#6366F1"/>
+<rect x="42" y="18" width="5" height="5" fill="#6366F1"/>
+<rect x="50" y="26" width="5" height="5" fill="#6366F1"/>
+
+<rect x="42" y="42" width="5" height="5" fill="#6366F1"/>
+<rect x="50" y="42" width="5" height="5" fill="#6366F1"/>
+<rect x="58" y="42" width="5" height="5" fill="#6366F1"/>
+<rect x="42" y="50" width="5" height="5" fill="#6366F1"/>
+<rect x="58" y="50" width="5" height="5" fill="#6366F1"/>
+
+<rect x="65" y="65" width="5" height="5" fill="#6366F1"/>
+<rect x="73" y="65" width="5" height="5" fill="#6366F1"/>
+<rect x="81" y="65" width="5" height="5" fill="#6366F1"/>
+<rect x="65" y="73" width="5" height="5" fill="#6366F1"/>
+<rect x="81" y="73" width="5" height="5" fill="#6366F1"/>
+<rect x="65" y="81" width="5" height="5" fill="#6366F1"/>
+<rect x="73" y="81" width="5" height="5" fill="#6366F1"/>
+
+<rect x="50" y="65" width="5" height="5" fill="#6366F1"/>
+<rect x="50" y="73" width="5" height="5" fill="#6366F1"/>
+<rect x="50" y="81" width="5" height="5" fill="#6366F1"/>
+</svg>
+</div>
+
+<!-- Hint -->
+<p class="hint">Point your camera at a QR code</p>
+
+<!-- Button -->
+<button class="btn-scan" onclick="window.location.href='scan.html'">Start Scanning</button>
+
+</div>
+
+<!-- Install Banner -->
 <div class="install-banner" id="installBanner">
 <span class="install-icon">📱</span>
 <div class="install-text">
 <div class="install-title">Install QR Guard</div>
-<div class="install-sub">Add to home screen for quick access</div>
+<div class="install-sub">Add to home screen</div>
 </div>
 <button class="install-btn" onclick="installApp()">Install</button>
 <button class="close-btn" onclick="closeBanner()">✕</button>
 </div>
 
 <script>
-// تسجيل Service Worker
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').then(reg => {
-        console.log('[SW] Registered');
-    }).catch(err => {
-        console.log('[SW] Error:', err);
-    });
+// Dark Mode
+function toggleDarkMode() {
+    document.body.classList.toggle('dark');
+    localStorage.setItem('darkMode', document.body.classList.contains('dark'));
 }
 
-// Install Banner
+// Load saved dark mode preference
+if (localStorage.getItem('darkMode') === 'true') {
+    document.body.classList.add('dark');
+}
+
+// Service Worker
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+}
+
+// PWA Install Banner
 let deferredPrompt;
 const installBanner = document.getElementById('installBanner');
 
@@ -83,11 +181,8 @@ window.addEventListener('beforeinstallprompt', (e) => {
 function installApp() {
     if (deferredPrompt) {
         deferredPrompt.prompt();
-        deferredPrompt.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-                console.log('[PWA] Installed');
-                installBanner.classList.remove('show');
-            }
+        deferredPrompt.userChoice.then(() => {
+            installBanner.classList.remove('show');
             deferredPrompt = null;
         });
     }
@@ -97,5 +192,6 @@ function closeBanner() {
     installBanner.classList.remove('show');
 }
 </script>
+
 </body>
 </html>
