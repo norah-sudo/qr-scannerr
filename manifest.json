@@ -1,16 +1,26 @@
 {
-  "name": "QR Guard",
+  "name": "QR Guard - Safe Scanner",
   "short_name": "QR Guard",
+  "description": "Detect malicious QR codes instantly with 2-layer security",
   "start_url": "/qr-scannerr/",
+  "scope": "/qr-scannerr/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#F8FAFC",
   "theme_color": "#6366F1",
-  "description": "Detect malicious QR codes instantly",
+  "categories": ["security", "utilities"],
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/norah-sudo/qr-scannerr/main/icon.png",
+      "src": "https://em-content.zobj.net/thumbs/240/google/350/shield_1f6e1-fe0f.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://em-content.zobj.net/thumbs/480/google/350/shield_1f6e1-fe0f.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
