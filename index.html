@@ -1,87 +1,41 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>QR Scanner</title>
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<meta name="theme-color" content="#6366F1">
+<title>QR Guard</title>
+<link rel="manifest" href="manifest.json">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-html,body{width:100%;height:100%;overflow:hidden;}
-body{background:#000;font-family:sans-serif;}
-.box{width:100%;height:100vh;position:relative;overflow:hidden;}
-#video{width:100%;height:100%;object-fit:cover;}
-#canvas{display:none;}
-.frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:250px;height:250px;border:4px solid #6366F1;border-radius:20px;box-shadow:0 0 0 9999px rgba(0,0,0,0.5);}
-.frame.ok{border-color:#10B981;}
-.status{position:absolute;bottom:30px;left:20px;right:20px;padding:16px;background:rgba(99,102,241,0.95);color:white;border-radius:15px;font-size:16px;font-weight:600;text-align:center;}
-.status.ok{background:rgba(16,185,129,0.95);}
-.status.err{background:rgba(239,68,68,0.95);}
-.loading{position:fixed;top:0;left:0;right:0;bottom:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;z-index:100;}
-.loading-spin{border:4px solid #333;border-top:4px solid #6366F1;border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;}
-@keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
+body{background:#F8FAFC;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.container{max-width:400px;width:100%;}
+.header{display:flex;align-items:center;gap:10px;margin-bottom:40px;}
+.logo{width:40px;height:40px;background:#6366F1;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-size:22px;}
+.app-name{font-size:22px;font-weight:bold;color:#1E293B;}
+.title{text-align:center;font-size:28px;font-weight:bold;color:#0F172A;margin-bottom:8px;}
+.subtitle{text-align:center;font-size:14px;color:#64748B;margin-bottom:40px;}
+.qr-icon{width:200px;height:200px;background:#EEF2FF;border-radius:30px;margin:0 auto 25px;display:flex;align-items:center;justify-content:center;font-size:120px;color:#6366F1;}
+.hint{text-align:center;font-size:13px;color:#94A3B8;font-style:italic;margin-bottom:25px;}
+.btn-primary{width:100%;padding:16px;background:#6366F1;color:white;border:none;border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform 0.2s;}
+.btn-primary:active{transform:scale(0.98);}
+.btn-primary:hover{background:#5558E3;}
 </style>
 </head>
 <body>
-<div class="loading" id="loading">
-<div class="loading-spin"></div>
-<p style="margin-top:20px;">📸 Opening camera...</p>
+<div class="container">
+<div class="header">
+<div class="logo">🛡️</div>
+<div class="app-name">QR Guard</div>
 </div>
-<div class="box" id="mainBox">
-<video id="video" autoplay playsinline muted></video>
-<div class="frame" id="frame"></div>
-<div class="status" id="status">🔍 Looking for QR code...</div>
-<canvas id="canvas"></canvas>
+<h1 class="title">Scan & Stay Safe</h1>
+<p class="subtitle">Detect malicious QR codes instantly</p>
+<div class="qr-icon">▣</div>
+<p class="hint">Point your camera at a QR code</p>
+<button class="btn-primary" onclick="window.location.href='scan.html'">
+<span style="font-size:22px;">▣</span>
+Start Scanning
+</button>
 </div>
-<script>
-const video=document.getElementById('video');
-const canvas=document.getElementById('canvas');
-const ctx=canvas.getContext('2d');
-const statusEl=document.getElementById('status');
-const frameEl=document.getElementById('frame');
-const loadingEl=document.getElementById('loading');
-let scanning=true;
-
-async function startCamera(){
-try{
-const stream=await navigator.mediaDevices.getUserMedia({
-video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},
-audio:false
-});
-loadingEl.style.display='none';
-video.srcObject=stream;
-video.onloadedmetadata=()=>{
-canvas.width=video.videoWidth;
-canvas.height=video.videoHeight;
-requestAnimationFrame(tick);
-};
-}catch(err){
-loadingEl.innerHTML='<p style="padding:20px;text-align:center;">❌ Camera access denied<br><br>'+err.message+'</p>';
-}
-}
-
-function tick(){
-if(!scanning)return;
-if(video.readyState===video.HAVE_ENOUGH_DATA){
-ctx.drawImage(video,0,0,canvas.width,canvas.height);
-const d=ctx.getImageData(0,0,canvas.width,canvas.height);
-const code=jsQR(d.data,d.width,d.height,{inversionAttempts:"dontInvert"});
-if(code&&code.data){
-scanning=false;
-statusEl.textContent='✅ QR detected!';
-statusEl.className='status ok';
-frameEl.className='frame ok';
-setTimeout(()=>{
-window.location.href='qrguard://scan?url='+encodeURIComponent(code.data);
-},800);
-return;
-}
-}
-requestAnimationFrame(tick);
-}
-
-// فتح الكاميرا فور تحميل الصفحة
-window.addEventListener('load',startCamera);
-</script>
 </body>
 </html>
