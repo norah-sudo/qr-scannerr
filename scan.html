@@ -67,171 +67,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;}
 
 <script>
 // ═══════════════════════════════════════════════════════
-// قاعدة بيانات المواقع الخبيثة المعروفة (Layer 1: Blacklist)
+// API URL - السيرفر الحقيقي على Hugging Face
+// يمر عبر الطبقتين:
+// 1. blacklist_layer_mobile.py (Google Safe Browsing)
+// 2. ai_layer_mobile.py (DistilRoBERTa AI Model)
 // ═══════════════════════════════════════════════════════
-const KNOWN_THREATS = [
-    'phishing', 'malware', 'scam', 'fake-bank', 'hack',
-    'virus', 'trojan', 'spyware', 'ransomware', 'exploit',
-    'suspicious', 'malicious', 'fraud', 'stealer',
-    'fake-login', 'credential-stealer', 'keylogger'
-];
-
-const SUSPICIOUS_TLDS = [
-    '.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top',
-    '.bid', '.loan', '.win', '.click', '.download'
-];
-
-const URL_SHORTENERS = [
-    'bit.ly', 'tinyurl.com', 'goo.gl', 't.co', 'ow.ly',
-    'is.gd', 'buff.ly', 'adf.ly', 'short.link'
-];
-
-const SAFE_DOMAINS = [
-    'google.com', 'youtube.com', 'facebook.com', 'twitter.com',
-    'instagram.com', 'github.com', 'microsoft.com', 'apple.com',
-    'amazon.com', 'wikipedia.org', 'reddit.com', 'linkedin.com',
-    'stackoverflow.com', 'netflix.com', 'spotify.com', 'whatsapp.com'
-];
-
-// ═══════════════════════════════════════════════════════
-// Layer 1: Google Blacklist (محاكاة)
-// ═══════════════════════════════════════════════════════
-function checkBlacklist(url) {
-    const urlLower = url.toLowerCase();
-    
-    // فحص الكلمات الخبيثة
-    for (const threat of KNOWN_THREATS) {
-        if (urlLower.includes(threat)) {
-            return { isThreat: true, reason: `Contains "${threat}"` };
-        }
-    }
-    
-    // فحص TLDs المشبوهة
-    for (const tld of SUSPICIOUS_TLDS) {
-        if (urlLower.includes(tld)) {
-            return { isThreat: true, reason: `Suspicious TLD: ${tld}` };
-        }
-    }
-    
-    // نطاق آمن معروف
-    for (const safe of SAFE_DOMAINS) {
-        if (urlLower.includes(safe)) {
-            return { isThreat: false, reason: 'Trusted domain' };
-        }
-    }
-    
-    return { isThreat: false, reason: 'Not in blacklist' };
-}
-
-// ═══════════════════════════════════════════════════════
-// Layer 2: AI Analysis (محاكاة ذكية)
-// ═══════════════════════════════════════════════════════
-function analyzeWithAI(url) {
-    let riskScore = 0;
-    const reasons = [];
-    
-    try {
-        const urlObj = new URL(url);
-        const hostname = urlObj.hostname.toLowerCase();
-        
-        // 1. فحص HTTPS (الآمن يستخدم HTTPS)
-        if (urlObj.protocol !== 'https:') {
-            riskScore += 25;
-            reasons.push('No HTTPS');
-        }
-        
-        // 2. فحص IP Address بدلاً من domain
-        const ipRegex = /^\d+\.\d+\.\d+\.\d+$/;
-        if (ipRegex.test(hostname)) {
-            riskScore += 40;
-            reasons.push('IP address URL');
-        }
-        
-        // 3. فحص طول الـ URL
-        if (url.length > 100) {
-            riskScore += 20;
-            reasons.push('Very long URL');
-        }
-        
-        // 4. فحص عدد النقاط (subdomains كثيرة)
-        const dots = (hostname.match(/\./g) || []).length;
-        if (dots > 3) {
-            riskScore += 20;
-            reasons.push('Too many subdomains');
-        }
-        
-        // 5. فحص URL Shorteners
-        for (const shortener of URL_SHORTENERS) {
-            if (hostname.includes(shortener)) {
-                riskScore += 30;
-                reasons.push('URL shortener');
-                break;
-            }
-        }
-        
-        // 6. فحص الأحرف المشبوهة
-        if (/[@%&?=]{3,}/.test(url)) {
-            riskScore += 15;
-            reasons.push('Suspicious characters');
-        }
-        
-        // 7. نطاقات آمنة معروفة
-        for (const safe of SAFE_DOMAINS) {
-            if (hostname.includes(safe)) {
-                riskScore = Math.max(0, riskScore - 50);
-                reasons.push('Known safe domain');
-                break;
-            }
-        }
-        
-        // 8. فحص domain قصير جداً (< 4 أحرف)
-        const domainParts = hostname.split('.');
-        if (domainParts[0].length < 4 && !SAFE_DOMAINS.some(d => hostname.includes(d))) {
-            riskScore += 10;
-            reasons.push('Short domain');
-        }
-        
-    } catch (e) {
-        riskScore = 50;
-        reasons.push('Invalid URL format');
-    }
-    
-    return {
-        isDangerous: riskScore >= 40,
-        score: riskScore,
-        reasons: reasons
-    };
-}
-
-// ═══════════════════════════════════════════════════════
-// الفحص الكامل (يمر عبر الطبقتين)
-// ═══════════════════════════════════════════════════════
-function analyzeURLComplete(url) {
-    console.log('[SCAN] Analyzing:', url);
-    
-    // Layer 1: Blacklist
-    const blacklistResult = checkBlacklist(url);
-    console.log('[Layer 1]', blacklistResult);
-    
-    // Layer 2: AI Analysis
-    const aiResult = analyzeWithAI(url);
-    console.log('[Layer 2]', aiResult);
-    
-    // النتيجة النهائية: خطر إذا أي طبقة أعطت إنذار
-    const isDangerous = blacklistResult.isThreat || aiResult.isDangerous;
-    
-    return {
-        url: url,
-        safe: !isDangerous,
-        google_status: blacklistResult.isThreat ? 'Threat' : 'Clean',
-        ai_status: aiResult.isDangerous ? 'High Risk' : 'Safe',
-        details: {
-            blacklist: blacklistResult.reason,
-            ai_score: aiResult.score,
-            ai_reasons: aiResult.reasons
-        }
-    };
-}
+const API_URL = 'https://norah-sudo-qr-guard-api.hf.space/scan';
 
 // ═══════════════════════════════════════════════════════
 // الكاميرا
@@ -281,7 +122,7 @@ function tick() {
             frameEl.className = 'scan-frame ok';
             setTimeout(() => {
                 if (stream) stream.getTracks().forEach(t => t.stop());
-                processURL(code.data);
+                analyzeURL(code.data);
             }, 800);
             return;
         }
@@ -289,23 +130,50 @@ function tick() {
     requestAnimationFrame(tick);
 }
 
-function processURL(url) {
+// ═══════════════════════════════════════════════════════
+// فحص الرابط عبر السيرفر الحقيقي (الطبقتين)
+// ═══════════════════════════════════════════════════════
+async function analyzeURL(url) {
     statusEl.textContent = '🔎 Analyzing through 2 security layers...';
     statusEl.className = 'status analyzing';
     
-    // محاكاة زمن الفحص (للواقعية)
-    setTimeout(() => {
-        const result = analyzeURLComplete(url);
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Server error: ' + response.status);
+        }
+        
+        const result = await response.json();
+        console.log('[SCAN RESULT]', result);
+        
         sessionStorage.setItem('scanResult', JSON.stringify(result));
         window.location.href = 'result.html';
-    }, 1500);
+        
+    } catch (err) {
+        console.error('[ERROR]', err);
+        
+        // في حالة فشل الاتصال بالسيرفر
+        const fallbackResult = {
+            url: url,
+            safe: false,
+            google_status: 'Offline',
+            ai_status: 'Server unreachable'
+        };
+        sessionStorage.setItem('scanResult', JSON.stringify(fallbackResult));
+        window.location.href = 'result.html';
+    }
 }
 
 function analyzeManual() {
     const url = urlInput.value.trim();
     if (url) {
         if (stream) stream.getTracks().forEach(t => t.stop());
-        processURL(url);
+        analyzeURL(url);
     }
 }
 
