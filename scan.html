@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Scanning - QR Guard</title>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;}
+.top-bar{position:fixed;top:0;left:0;right:0;padding:15px 20px;background:rgba(0,0,0,0.7);color:white;display:flex;align-items:center;gap:10px;z-index:10;backdrop-filter:blur(10px);}
+.back-btn{width:35px;height:35px;background:#6366F1;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;color:white;font-size:20px;}
+.title{font-size:20px;font-weight:bold;}
+.video-container{width:100%;height:100vh;position:relative;}
+#video{width:100%;height:100%;object-fit:cover;}
+#canvas{display:none;}
+.scan-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:260px;height:260px;border:4px solid #6366F1;border-radius:20px;box-shadow:0 0 0 9999px rgba(0,0,0,0.5);}
+.scan-frame.ok{border-color:#10B981;animation:pulse 0.5s;}
+@keyframes pulse{0%,100%{transform:translate(-50%,-50%) scale(1);}50%{transform:translate(-50%,-50%) scale(1.05);}}
+.corner{position:absolute;width:30px;height:30px;border:4px solid white;}
+.corner.tl{top:-4px;left:-4px;border-right:none;border-bottom:none;border-top-left-radius:20px;}
+.corner.tr{top:-4px;right:-4px;border-left:none;border-bottom:none;border-top-right-radius:20px;}
+.corner.bl{bottom:-4px;left:-4px;border-right:none;border-top:none;border-bottom-left-radius:20px;}
+.corner.br{bottom:-4px;right:-4px;border-left:none;border-top:none;border-bottom-right-radius:20px;}
+.status{position:fixed;bottom:100px;left:20px;right:20px;padding:15px;background:rgba(99,102,241,0.95);color:white;border-radius:15px;text-align:center;font-size:15px;font-weight:600;backdrop-filter:blur(10px);}
+.status.ok{background:rgba(16,185,129,0.95);}
+.status.err{background:rgba(239,68,68,0.95);}
+.manual-entry{position:fixed;bottom:20px;left:20px;right:20px;display:flex;gap:10px;}
+.manual-input{flex:1;padding:12px;border:2px solid #6366F1;border-radius:10px;font-size:14px;background:rgba(255,255,255,0.95);}
+.manual-btn{padding:12px 20px;background:#6366F1;color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;}
+.loading{position:fixed;top:0;left:0;right:0;bottom:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;z-index:100;}
+.spinner{border:4px solid #333;border-top:4px solid #6366F1;border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;margin-bottom:20px;}
+@keyframes spin{0%{transform:rotate(0);}100%{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div class="loading" id="loading">
+<div class="spinner"></div>
+<p>📸 Opening camera...</p>
+<p style="font-size:12px;color:#888;margin-top:10px;">Please allow camera access</p>
+</div>
+
+<div class="top-bar">
+<button class="back-btn" onclick="window.location.href='index.html'">◀</button>
+<div class="title">🛡️ Scanning</div>
+</div>
+
+<div class="video-container">
+<video id="video" autoplay playsinline muted></video>
+<div class="scan-frame" id="frame">
+<div class="corner tl"></div>
+<div class="corner tr"></div>
+<div class="corner bl"></div>
+<div class="corner br"></div>
+</div>
+<canvas id="canvas"></canvas>
+</div>
+
+<div class="status" id="status">🔍 Looking for QR code...</div>
+
+<div class="manual-entry">
+<input type="text" class="manual-input" id="urlInput" placeholder="Or paste URL manually">
+<button class="manual-btn" onclick="analyzeManual()">Analyze</button>
+</div>
+
+<script>
+const API_URL = 'http://192.168.1.127:8000/scan';
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const statusEl = document.getElementById('status');
+const frameEl = document.getElementById('frame');
+const loadingEl = document.getElementById('loading');
+const urlInput = document.getElementById('urlInput');
+let scanning = true;
+let stream = null;
+
+async function startCamera() {
+try {
+stream = await navigator.mediaDevices.getUserMedia({
+video: {
+facingMode: { ideal: 'environment' },
+width: { ideal: 1280 },
+height: { ideal: 720 }
+},
+audio: false
+});
+loadingEl.style.display = 'none';
+video.srcObject = stream;
+video.onloadedmetadata = () => {
+canvas.width = video.videoWidth;
+canvas.height = video.videoHeight;
+requestAnimationFrame(tick);
+};
+} catch (err) {
+loadingEl.innerHTML = '<p style="padding:20px;text-align:center;">❌ Camera access denied<br><br>' + err.message + '<br><br><button onclick="window.location.href=\'index.html\'" style="padding:10px 20px;background:#6366F1;color:white;border:none;border-radius:8px;">Go Back</button></p>';
+}
+}
+
+function tick() {
+if (!scanning) return;
+if (video.readyState === video.HAVE_ENOUGH_DATA) {
+ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+const d = ctx.getImageData(0, 0, canvas.width, canvas.height);
+const code = jsQR(d.data, d.width, d.height, { inversionAttempts: "dontInvert" });
+if (code && code.data) {
+scanning = false;
+statusEl.textContent = '✅ QR detected!';
+statusEl.className = 'status ok';
+frameEl.className = 'scan-frame ok';
+setTimeout(() => {
+if (stream) stream.getTracks().forEach(t => t.stop());
+analyzeURL(code.data);
+}, 800);
+return;
+}
+}
+requestAnimationFrame(tick);
+}
+
+async function analyzeURL(url) {
+sessionStorage.setItem('scannedUrl', url);
+statusEl.textContent = '🔎 Analyzing...';
+try {
+const response = await fetch(API_URL, {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ url: url })
+});
+const result = await response.json();
+sessionStorage.setItem('scanResult', JSON.stringify(result));
+window.location.href = 'result.html';
+} catch (err) {
+const result = {
+url: url,
+safe: false,
+google_status: 'Offline',
+ai_status: 'Server unreachable'
+};
+sessionStorage.setItem('scanResult', JSON.stringify(result));
+window.location.href = 'result.html';
+}
+}
+
+function analyzeManual() {
+const url = urlInput.value.trim();
+if (url) {
+if (stream) stream.getTracks().forEach(t => t.stop());
+analyzeURL(url);
+}
+}
+
+window.addEventListener('load', startCamera);
+</script>
+</body>
+</html>
