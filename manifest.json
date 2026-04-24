@@ -1,0 +1,16 @@
+{
+  "name": "QR Guard",
+  "short_name": "QR Guard",
+  "start_url": "/qr-scannerr/",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#6366F1",
+  "description": "Detect malicious QR codes instantly",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/norah-sudo/qr-scannerr/main/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
