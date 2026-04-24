@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#6366F1">
 <title>Scanning - QR Guard</title>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
@@ -25,6 +26,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;}
 .status{position:fixed;bottom:100px;left:20px;right:20px;padding:15px;background:rgba(99,102,241,0.95);color:white;border-radius:15px;text-align:center;font-size:15px;font-weight:600;backdrop-filter:blur(10px);}
 .status.ok{background:rgba(16,185,129,0.95);}
 .status.err{background:rgba(239,68,68,0.95);}
+.status.analyzing{background:rgba(245,158,11,0.95);}
 .manual-entry{position:fixed;bottom:20px;left:20px;right:20px;display:flex;gap:10px;}
 .manual-input{flex:1;padding:12px;border:2px solid #6366F1;border-radius:10px;font-size:14px;background:rgba(255,255,255,0.95);}
 .manual-btn{padding:12px 20px;background:#6366F1;color:white;border:none;border-radius:10px;font-weight:bold;cursor:pointer;}
@@ -64,7 +66,176 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;}
 </div>
 
 <script>
-const API_URL = 'http://192.168.1.127:8000/scan';
+// ═══════════════════════════════════════════════════════
+// قاعدة بيانات المواقع الخبيثة المعروفة (Layer 1: Blacklist)
+// ═══════════════════════════════════════════════════════
+const KNOWN_THREATS = [
+    'phishing', 'malware', 'scam', 'fake-bank', 'hack',
+    'virus', 'trojan', 'spyware', 'ransomware', 'exploit',
+    'suspicious', 'malicious', 'fraud', 'stealer',
+    'fake-login', 'credential-stealer', 'keylogger'
+];
+
+const SUSPICIOUS_TLDS = [
+    '.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top',
+    '.bid', '.loan', '.win', '.click', '.download'
+];
+
+const URL_SHORTENERS = [
+    'bit.ly', 'tinyurl.com', 'goo.gl', 't.co', 'ow.ly',
+    'is.gd', 'buff.ly', 'adf.ly', 'short.link'
+];
+
+const SAFE_DOMAINS = [
+    'google.com', 'youtube.com', 'facebook.com', 'twitter.com',
+    'instagram.com', 'github.com', 'microsoft.com', 'apple.com',
+    'amazon.com', 'wikipedia.org', 'reddit.com', 'linkedin.com',
+    'stackoverflow.com', 'netflix.com', 'spotify.com', 'whatsapp.com'
+];
+
+// ═══════════════════════════════════════════════════════
+// Layer 1: Google Blacklist (محاكاة)
+// ═══════════════════════════════════════════════════════
+function checkBlacklist(url) {
+    const urlLower = url.toLowerCase();
+    
+    // فحص الكلمات الخبيثة
+    for (const threat of KNOWN_THREATS) {
+        if (urlLower.includes(threat)) {
+            return { isThreat: true, reason: `Contains "${threat}"` };
+        }
+    }
+    
+    // فحص TLDs المشبوهة
+    for (const tld of SUSPICIOUS_TLDS) {
+        if (urlLower.includes(tld)) {
+            return { isThreat: true, reason: `Suspicious TLD: ${tld}` };
+        }
+    }
+    
+    // نطاق آمن معروف
+    for (const safe of SAFE_DOMAINS) {
+        if (urlLower.includes(safe)) {
+            return { isThreat: false, reason: 'Trusted domain' };
+        }
+    }
+    
+    return { isThreat: false, reason: 'Not in blacklist' };
+}
+
+// ═══════════════════════════════════════════════════════
+// Layer 2: AI Analysis (محاكاة ذكية)
+// ═══════════════════════════════════════════════════════
+function analyzeWithAI(url) {
+    let riskScore = 0;
+    const reasons = [];
+    
+    try {
+        const urlObj = new URL(url);
+        const hostname = urlObj.hostname.toLowerCase();
+        
+        // 1. فحص HTTPS (الآمن يستخدم HTTPS)
+        if (urlObj.protocol !== 'https:') {
+            riskScore += 25;
+            reasons.push('No HTTPS');
+        }
+        
+        // 2. فحص IP Address بدلاً من domain
+        const ipRegex = /^\d+\.\d+\.\d+\.\d+$/;
+        if (ipRegex.test(hostname)) {
+            riskScore += 40;
+            reasons.push('IP address URL');
+        }
+        
+        // 3. فحص طول الـ URL
+        if (url.length > 100) {
+            riskScore += 20;
+            reasons.push('Very long URL');
+        }
+        
+        // 4. فحص عدد النقاط (subdomains كثيرة)
+        const dots = (hostname.match(/\./g) || []).length;
+        if (dots > 3) {
+            riskScore += 20;
+            reasons.push('Too many subdomains');
+        }
+        
+        // 5. فحص URL Shorteners
+        for (const shortener of URL_SHORTENERS) {
+            if (hostname.includes(shortener)) {
+                riskScore += 30;
+                reasons.push('URL shortener');
+                break;
+            }
+        }
+        
+        // 6. فحص الأحرف المشبوهة
+        if (/[@%&?=]{3,}/.test(url)) {
+            riskScore += 15;
+            reasons.push('Suspicious characters');
+        }
+        
+        // 7. نطاقات آمنة معروفة
+        for (const safe of SAFE_DOMAINS) {
+            if (hostname.includes(safe)) {
+                riskScore = Math.max(0, riskScore - 50);
+                reasons.push('Known safe domain');
+                break;
+            }
+        }
+        
+        // 8. فحص domain قصير جداً (< 4 أحرف)
+        const domainParts = hostname.split('.');
+        if (domainParts[0].length < 4 && !SAFE_DOMAINS.some(d => hostname.includes(d))) {
+            riskScore += 10;
+            reasons.push('Short domain');
+        }
+        
+    } catch (e) {
+        riskScore = 50;
+        reasons.push('Invalid URL format');
+    }
+    
+    return {
+        isDangerous: riskScore >= 40,
+        score: riskScore,
+        reasons: reasons
+    };
+}
+
+// ═══════════════════════════════════════════════════════
+// الفحص الكامل (يمر عبر الطبقتين)
+// ═══════════════════════════════════════════════════════
+function analyzeURLComplete(url) {
+    console.log('[SCAN] Analyzing:', url);
+    
+    // Layer 1: Blacklist
+    const blacklistResult = checkBlacklist(url);
+    console.log('[Layer 1]', blacklistResult);
+    
+    // Layer 2: AI Analysis
+    const aiResult = analyzeWithAI(url);
+    console.log('[Layer 2]', aiResult);
+    
+    // النتيجة النهائية: خطر إذا أي طبقة أعطت إنذار
+    const isDangerous = blacklistResult.isThreat || aiResult.isDangerous;
+    
+    return {
+        url: url,
+        safe: !isDangerous,
+        google_status: blacklistResult.isThreat ? 'Threat' : 'Clean',
+        ai_status: aiResult.isDangerous ? 'High Risk' : 'Safe',
+        details: {
+            blacklist: blacklistResult.reason,
+            ai_score: aiResult.score,
+            ai_reasons: aiResult.reasons
+        }
+    };
+}
+
+// ═══════════════════════════════════════════════════════
+// الكاميرا
+// ═══════════════════════════════════════════════════════
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -76,78 +247,66 @@ let scanning = true;
 let stream = null;
 
 async function startCamera() {
-try {
-stream = await navigator.mediaDevices.getUserMedia({
-video: {
-facingMode: { ideal: 'environment' },
-width: { ideal: 1280 },
-height: { ideal: 720 }
-},
-audio: false
-});
-loadingEl.style.display = 'none';
-video.srcObject = stream;
-video.onloadedmetadata = () => {
-canvas.width = video.videoWidth;
-canvas.height = video.videoHeight;
-requestAnimationFrame(tick);
-};
-} catch (err) {
-loadingEl.innerHTML = '<p style="padding:20px;text-align:center;">❌ Camera access denied<br><br>' + err.message + '<br><br><button onclick="window.location.href=\'index.html\'" style="padding:10px 20px;background:#6366F1;color:white;border:none;border-radius:8px;">Go Back</button></p>';
-}
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            },
+            audio: false
+        });
+        loadingEl.style.display = 'none';
+        video.srcObject = stream;
+        video.onloadedmetadata = () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            requestAnimationFrame(tick);
+        };
+    } catch (err) {
+        loadingEl.innerHTML = '<p style="padding:20px;text-align:center;">❌ Camera access denied<br><br>' + err.message + '<br><br><button onclick="window.location.href=\'index.html\'" style="padding:10px 20px;background:#6366F1;color:white;border:none;border-radius:8px;">Go Back</button></p>';
+    }
 }
 
 function tick() {
-if (!scanning) return;
-if (video.readyState === video.HAVE_ENOUGH_DATA) {
-ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-const d = ctx.getImageData(0, 0, canvas.width, canvas.height);
-const code = jsQR(d.data, d.width, d.height, { inversionAttempts: "dontInvert" });
-if (code && code.data) {
-scanning = false;
-statusEl.textContent = '✅ QR detected!';
-statusEl.className = 'status ok';
-frameEl.className = 'scan-frame ok';
-setTimeout(() => {
-if (stream) stream.getTracks().forEach(t => t.stop());
-analyzeURL(code.data);
-}, 800);
-return;
-}
-}
-requestAnimationFrame(tick);
+    if (!scanning) return;
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const d = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(d.data, d.width, d.height, { inversionAttempts: "dontInvert" });
+        if (code && code.data) {
+            scanning = false;
+            statusEl.textContent = '✅ QR detected!';
+            statusEl.className = 'status ok';
+            frameEl.className = 'scan-frame ok';
+            setTimeout(() => {
+                if (stream) stream.getTracks().forEach(t => t.stop());
+                processURL(code.data);
+            }, 800);
+            return;
+        }
+    }
+    requestAnimationFrame(tick);
 }
 
-async function analyzeURL(url) {
-sessionStorage.setItem('scannedUrl', url);
-statusEl.textContent = '🔎 Analyzing...';
-try {
-const response = await fetch(API_URL, {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ url: url })
-});
-const result = await response.json();
-sessionStorage.setItem('scanResult', JSON.stringify(result));
-window.location.href = 'result.html';
-} catch (err) {
-const result = {
-url: url,
-safe: false,
-google_status: 'Offline',
-ai_status: 'Server unreachable'
-};
-sessionStorage.setItem('scanResult', JSON.stringify(result));
-window.location.href = 'result.html';
-}
+function processURL(url) {
+    statusEl.textContent = '🔎 Analyzing through 2 security layers...';
+    statusEl.className = 'status analyzing';
+    
+    // محاكاة زمن الفحص (للواقعية)
+    setTimeout(() => {
+        const result = analyzeURLComplete(url);
+        sessionStorage.setItem('scanResult', JSON.stringify(result));
+        window.location.href = 'result.html';
+    }, 1500);
 }
 
 function analyzeManual() {
-const url = urlInput.value.trim();
-if (url) {
-if (stream) stream.getTracks().forEach(t => t.stop());
-analyzeURL(url);
-}
+    const url = urlInput.value.trim();
+    if (url) {
+        if (stream) stream.getTracks().forEach(t => t.stop());
+        processURL(url);
+    }
 }
 
 window.addEventListener('load', startCamera);
