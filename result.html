@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Result - QR Guard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
+body{background:#F8FAFC;min-height:100vh;padding:20px;}
+.container{max-width:400px;margin:0 auto;}
+.header{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.logo{width:40px;height:40px;background:#6366F1;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-size:22px;}
+.app-name{font-size:22px;font-weight:bold;color:#1E293B;}
+.status-icon{width:140px;height:140px;border-radius:70px;margin:20px auto;display:flex;align-items:center;justify-content:center;font-size:70px;}
+.status-icon.safe{background:#D1FAE5;color:#10B981;}
+.status-icon.danger{background:#FEE2E2;color:#EF4444;}
+.title{text-align:center;font-size:34px;font-weight:bold;margin-bottom:5px;}
+.title.safe{color:#059669;}
+.title.danger{color:#DC2626;}
+.subtitle{text-align:center;font-size:14px;color:#64748B;margin-bottom:20px;}
+.url-box{background:white;border-radius:12px;padding:14px;margin-bottom:15px;}
+.url-label{font-size:11px;color:#94A3B8;margin-bottom:4px;}
+.url-value{font-size:13px;font-weight:bold;word-break:break-all;}
+.url-value.safe{color:#059669;}
+.url-value.danger{color:#DC2626;}
+.row{background:white;border-radius:12px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;}
+.row-icon{font-size:20px;}
+.row-label{flex:1;font-size:14px;font-weight:500;color:#334155;}
+.row-value{font-size:14px;font-weight:bold;}
+.row-value.safe{color:#10B981;}
+.row-value.danger{color:#EF4444;}
+.btn-scan{width:100%;padding:16px;background:white;color:#1E293B;border:2px solid #E2E8F0;border-radius:12px;font-size:15px;font-weight:bold;cursor:pointer;margin-top:15px;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-scan:active{transform:scale(0.98);}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<div class="logo">🛡️</div>
+<div class="app-name">Scan Result</div>
+</div>
+
+<div class="status-icon" id="statusIcon">⏳</div>
+<h1 class="title" id="title">Loading...</h1>
+<p class="subtitle" id="subtitle"></p>
+
+<div class="url-box">
+<div class="url-label">Scanned URL</div>
+<div class="url-value" id="urlValue"></div>
+</div>
+
+<div class="row">
+<span class="row-icon" id="googleIcon">⏳</span>
+<span class="row-label">Google Blacklist</span>
+<span class="row-value" id="googleStatus">...</span>
+</div>
+
+<div class="row">
+<span class="row-icon" id="aiIcon">⏳</span>
+<span class="row-label">AI Analysis</span>
+<span class="row-value" id="aiStatus">...</span>
+</div>
+
+<button class="btn-scan" onclick="window.location.href='scan.html'">
+🔄 Scan Again
+</button>
+</div>
+
+<script>
+const result = JSON.parse(sessionStorage.getItem('scanResult') || '{}');
+const safe = result.safe;
+const url = result.url || 'Unknown';
+
+document.getElementById('urlValue').textContent = url;
+document.getElementById('googleStatus').textContent = result.google_status || '?';
+document.getElementById('aiStatus').textContent = result.ai_status || '?';
+
+if (safe) {
+document.getElementById('statusIcon').textContent = '✓';
+document.getElementById('statusIcon').className = 'status-icon safe';
+document.getElementById('title').textContent = 'SAFE';
+document.getElementById('title').className = 'title safe';
+document.getElementById('subtitle').textContent = 'This link is safe to open';
+document.getElementById('urlValue').className = 'url-value safe';
+document.getElementById('googleIcon').textContent = '✓';
+document.getElementById('googleStatus').className = 'row-value safe';
+document.getElementById('aiIcon').textContent = '✓';
+document.getElementById('aiStatus').className = 'row-value safe';
+} else {
+document.getElementById('statusIcon').textContent = '⚠';
+document.getElementById('statusIcon').className = 'status-icon danger';
+document.getElementById('title').textContent = 'DANGEROUS';
+document.getElementById('title').className = 'title danger';
+document.getElementById('subtitle').textContent = 'Do not open this link!';
+document.getElementById('urlValue').className = 'url-value danger';
+document.getElementById('googleIcon').textContent = '✗';
+document.getElementById('googleStatus').className = 'row-value danger';
+document.getElementById('aiIcon').textContent = '✗';
+document.getElementById('aiStatus').className = 'row-value danger';
+}
+</script>
+</body>
+</html>
