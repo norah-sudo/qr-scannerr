@@ -67,7 +67,10 @@ body{background:#F8FAFC;min-height:100vh;padding:20px;}
 </div>
 
 <script>
-const result = JSON.parse(sessionStorage.getItem('scanResult') || '{}');
+const fullData = JSON.parse(sessionStorage.getItem('scanResult') || '{}');
+// Adjust to extract inner 'result' object if it exists
+const result = fullData.result || fullData;
+
 const safe = result.safe;
 const url = result.url || 'Unknown';
 
@@ -76,27 +79,27 @@ document.getElementById('googleStatus').textContent = result.google_status || '?
 document.getElementById('aiStatus').textContent = result.ai_status || '?';
 
 if (safe) {
-document.getElementById('statusIcon').textContent = '✓';
-document.getElementById('statusIcon').className = 'status-icon safe';
-document.getElementById('title').textContent = 'SAFE';
-document.getElementById('title').className = 'title safe';
-document.getElementById('subtitle').textContent = 'This link is safe to open';
-document.getElementById('urlValue').className = 'url-value safe';
-document.getElementById('googleIcon').textContent = '✓';
-document.getElementById('googleStatus').className = 'row-value safe';
-document.getElementById('aiIcon').textContent = '✓';
-document.getElementById('aiStatus').className = 'row-value safe';
+    document.getElementById('statusIcon').textContent = '✓';
+    document.getElementById('statusIcon').className = 'status-icon safe';
+    document.getElementById('title').textContent = 'SAFE';
+    document.getElementById('title').className = 'title safe';
+    document.getElementById('subtitle').textContent = 'This link is safe to open';
+    document.getElementById('urlValue').className = 'url-value safe';
+    document.getElementById('googleIcon').textContent = '✓';
+    document.getElementById('googleStatus').className = 'row-value safe';
+    document.getElementById('aiIcon').textContent = '✓';
+    document.getElementById('aiStatus').className = 'row-value safe';
 } else {
-document.getElementById('statusIcon').textContent = '⚠';
-document.getElementById('statusIcon').className = 'status-icon danger';
-document.getElementById('title').textContent = 'DANGEROUS';
-document.getElementById('title').className = 'title danger';
-document.getElementById('subtitle').textContent = 'Do not open this link!';
-document.getElementById('urlValue').className = 'url-value danger';
-document.getElementById('googleIcon').textContent = '✗';
-document.getElementById('googleStatus').className = 'row-value danger';
-document.getElementById('aiIcon').textContent = '✗';
-document.getElementById('aiStatus').className = 'row-value danger';
+    document.getElementById('statusIcon').textContent = '⚠';
+    document.getElementById('statusIcon').className = 'status-icon danger';
+    document.getElementById('title').textContent = 'DANGEROUS';
+    document.getElementById('title').className = 'title danger';
+    document.getElementById('subtitle').textContent = 'Do not open this link!';
+    document.getElementById('urlValue').className = 'url-value danger';
+    document.getElementById('googleIcon').textContent = '✗';
+    document.getElementById('googleStatus').className = 'row-value danger';
+    document.getElementById('aiIcon').textContent = '✗';
+    document.getElementById('aiStatus').className = 'row-value danger';
 }
 </script>
 </body>
